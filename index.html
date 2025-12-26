@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Happy New Year Manao & Ome</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
@@ -11,151 +11,147 @@
             background: #020202;
             overflow: hidden;
             font-family: 'Sarabun', sans-serif;
-            user-select: none;
-            /* ป้องกันการเลื่อนหน้าจอในมือถือ */
-            position: fixed; width: 100%; height: 100%;
+            width: 100vw; height: 100dvh;
+            touch-action: none; position: fixed;
         }
 
         canvas {
-            display: block; position: absolute; top: 0; left: 0; z-index: 1;
-            /* เพิ่มความคมชัดและสดใสให้เข้ากับเส้นที่หนาขึ้น */
-            filter: contrast(1.3) saturate(1.4); 
+            display: block; position: absolute; top: 0; left: 0; 
+            z-index: 1; width: 100%; height: 100%;
+            filter: contrast(1.2) saturate(1.3);
         }
 
+        /* --- UI Elements --- */
         #start-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #111 0%, #000 100%);
-            z-index: 999;
-            display: flex; justify-content: center; align-items: center; flex-direction: column;
-            color: white; cursor: pointer; transition: opacity 1s ease;
+            z-index: 999; display: flex; justify-content: center; align-items: center; 
+            flex-direction: column; color: white; cursor: pointer; transition: opacity 0.8s ease;
         }
         #start-screen h1 { 
             animation: pulse 1.5s infinite alternate; 
             text-shadow: 0 0 20px rgba(255,255,255,0.5);
-            text-align: center; font-size: 1.8rem;
+            text-align: center; font-size: 1.5rem;
         }
 
-        /* --- ปรับตำแหน่งและขนาดสำหรับมือถือแนวตั้ง --- */
         #name-container {
-            position: absolute; 
-            top: 12%; /* ขยับขึ้นไปสูงๆ */
-            left: 50%;
+            position: absolute; top: 10%; left: 50%;
             transform: translate(-50%, -50%) scale(0.8);
             z-index: 10; opacity: 0; pointer-events: none;
-            transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-            width: 90%; /* ให้กว้างเกือบเต็มจอ */
-            text-align: center;
+            transition: all 1.2s; width: 100%; text-align: center;
         }
         #name-container.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
         .glowing-text {
             font-family: 'Dancing Script', cursive;
-            /* ขนาดฟอนต์เริ่มต้นสำหรับจอใหญ่ */
-            font-size: 3.5rem; 
-            color: #fff;
-            text-shadow: 0 0 10px #fff, 0 0 20px #ffb7b2, 0 0 40px #ffb7b2;
+            font-size: 2.8rem; color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 20px #ffb7b2;
             white-space: nowrap; margin: 0;
         }
 
-        #flash-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; z-index: 50; opacity: 0; pointer-events: none;
-            transition: opacity 0.5s ease-out;
+        /* --- Puzzle Styles --- */
+        #puzzle-wrapper {
+            position: absolute; top: 55%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 30; opacity: 0; pointer-events: none;
+            transition: opacity 1s;
+            display: flex; flex-direction: column; align-items: center;
+            width: 90%; max-width: 320px;
+        }
+        #puzzle-wrapper.active { opacity: 1; pointer-events: auto; }
+
+        .puzzle-title {
+            color: #fff; margin-bottom: 15px; font-size: 1.1rem;
+            text-shadow: 0 0 10px #ff69b4; text-align: center;
         }
 
+        #puzzle-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 2px;
+            width: 280px; height: 350px; /* ปรับขนาดให้เป็นแนวตั้ง */
+            background: #fff; padding: 2px;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(255,105,180, 0.5);
+        }
+
+        .puzzle-piece {
+            background-image: url('photo1.jpg'); /* ใช้รูปแรกเป็นจิ๊กซอว์ */
+            background-size: 280px 350px; /* ต้องเท่ากับขนาด board */
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .puzzle-piece.selected {
+            z-index: 10;
+            box-shadow: 0 0 0 2px #fff, 0 0 10px #ff00de;
+            transform: scale(0.95);
+            border: 2px solid #ff00de;
+        }
+
+        #success-msg-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 40; pointer-events: none; opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .success-text {
+            font-size: 3rem; color: #fff; font-weight: bold;
+            text-shadow: 0 0 20px #ff00de, 0 0 40px #fff;
+            transform: scale(0.5); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #success-msg-overlay.show { opacity: 1; }
+        #success-msg-overlay.show .success-text { transform: scale(1); }
+
+
+        /* --- Content Box (ข้อความยาว) --- */
         #content-box {
-            position: absolute; bottom: 0; left: 0; width: 100%; 
-            height: 85%; /* เพิ่มพื้นที่ให้สูงขึ้น */
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 85%;
             z-index: 20; display: flex; flex-direction: column;
             align-items: center; justify-content: flex-end;
-            padding-bottom: 20px; opacity: 0;
+            padding-bottom: 30px; opacity: 0; pointer-events: none;
             transform: translateY(30px); transition: all 2s ease-out;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 20%, transparent 100%);
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 30%, transparent 100%);
         }
-        #content-box.visible { opacity: 1; transform: translateY(0); }
+        #content-box.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-        .title-msg {
-            font-size: 1.6rem; color: #fff; font-weight: 600;
-            margin-bottom: 10px; text-align: center;
-            text-shadow: 0 0 15px rgba(255,255,255, 0.6);
-            width: 90%;
-        }
-
-        .body-msg {
-            font-size: 1rem; color: #f0f0f0; font-weight: 300;
-            text-align: center; line-height: 1.5;
-            margin-bottom: 20px; padding: 0 15px;
-            width: 90%; word-wrap: break-word;
-        }
-
+        .title-msg { font-size: 1.4rem; color: #fff; font-weight: 600; margin-bottom: 10px; text-shadow: 0 0 10px rgba(255,255,255,0.6); }
+        .body-msg { font-size: 0.9rem; color: #f0f0f0; font-weight: 300; text-align: center; line-height: 1.6; margin-bottom: 15px; padding: 0 20px; width: 85%; }
+        
         .photo-frame {
-            position: relative; padding: 6px;
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); 
-            /* ขนาดเริ่มต้นสำหรับจอใหญ่ */
-            width: 200px; height: 260px;
-            cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
-            flex-shrink: 0;
+            position: relative; padding: 5px; background: #fff; border-radius: 12px;
+            box-shadow: 0 0 20px rgba(255,255,255,0.4); width: 160px; height: 220px;
+            cursor: pointer; transition: transform 0.2s; flex-shrink: 0;
         }
         .photo-frame:active { transform: scale(0.95); }
-
-        .couple-photo {
-            width: 100%; height: 100%;
-            object-fit: cover; border-radius: 8px; 
-            border: 1px solid #ddd;
-            transition: opacity 0.6s ease-in-out;
-        }
-        
+        .couple-photo { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; }
         .photo-fade-out { opacity: 0; }
-        
-        .click-hint {
-            font-size: 0.8rem; color: rgba(255,255,255,0.5);
-            margin-top: 10px; font-weight: 300; letter-spacing: 1px;
-            animation: blink 3s infinite ease-in-out;
-        }
+        .click-hint { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 10px; animation: blink 3s infinite; }
 
         @keyframes pulse { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.05); opacity: 1; } }
         @keyframes blink { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }
-
-        /* --- Media Query สำหรับมือถือแนวตั้ง (สำคัญมาก) --- */
-        @media (max-width: 600px) {
-            /* ปรับขนาดฟอนต์ชื่อให้เล็กลง พอดีจอ */
-            .glowing-text { font-size: 2.5rem; } 
-            /* ขยับชื่อขึ้นไปอีก */
-            #name-container { top: 10%; }
-            
-            /* ปรับขนาดข้อความต่างๆ ให้เล็กลง */
-            .title-msg { font-size: 1.3rem; }
-            .body-msg { font-size: 0.85rem; line-height: 1.6; margin-bottom: 15px; }
-            
-            /* ปรับขนาดกรอบรูปให้เล็กลงและเป็นแนวตั้ง */
-            .photo-frame { width: 160px; height: 220px; }
-            
-            /* ปรับหน้าจอเริ่ม */
-            #start-screen h1 { font-size: 1.5rem; }
-        }
     </style>
 </head>
 <body>
-
     <audio id="bg-music" loop><source src="song.mp3" type="audio/mpeg"></audio>
-
-    <div id="start-screen" onclick="startShow()">
-        <h1>✨ แตะเพื่อเริ่ม ✨</h1>
-        <p style="font-size: 0.9rem;">(เปิดเสียงด้วยนะ)</p>
-    </div>
-
-    <div id="flash-overlay"></div>
+    <div id="start-screen" onclick="startShow()"><h1>✨ แตะเพื่อเริ่ม ✨</h1><p style="font-size:0.8rem;">(หน้าจอนี้ทำมาเพื่อเธอ)</p></div>
+    <div id="flash-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:50;opacity:0;pointer-events:none;transition:opacity 0.5s;"></div>
+    
     <canvas id="canvas"></canvas>
 
-    <div id="name-container">
-        <h1 class="glowing-text">Manao 💗 Ome</h1>
+    <div id="name-container"><h1 class="glowing-text">Manao 💗 Ome</h1></div>
+
+    <div id="puzzle-wrapper">
+        <div class="puzzle-title">ช่วยต่อรูปของเราให้สมบูรณ์หน่อยนะ ❤️<br><span style="font-size:0.8rem">(แตะ 2 รูปเพื่อสลับตำแหน่ง)</span></div>
+        <div id="puzzle-board"></div>
+    </div>
+
+    <div id="success-msg-overlay">
+        <div class="success-text">เก่งมาก! 👏🥰</div>
     </div>
 
     <div id="content-box">
         <div class="title-msg">สวัสดีปีใหม่นะที่รัก 🤍✨</div>
-        
         <div class="body-msg">
             ขอบคุณปีที่ผ่านมาที่มีเธออยู่ข้างๆ กันเสมอ<br>
             ไม่ว่าจะเป็นวันที่ดีหรือวันที่เหนื่อย<br>
@@ -163,12 +159,8 @@
             ขอให้ปีใหม่นี้เป็นอีกปีที่เราได้จับมือกันแน่นๆ<br>
             มีรอยยิ้มให้กันเยอะๆ ทะเลาะกันน้อยๆ<br>
             และรักกันมากขึ้นทุกๆ วันนะ<br>
-            ขอให้เธอมีแต่ความสุข สุขภาพแข็งแรง<br>
-            และไม่ว่าจะเจออะไร พี่จะอยู่ข้างๆ เธอเสมอ<br>
-            <br>
-            <span style="font-size: 1rem; font-weight: 500; color: #ffb7b2;">รักนะ ❤️🥰</span>
+            <br><span style="font-size: 1rem; font-weight: 500; color: #ffb7b2;">รักนะ ❤️🥰</span>
         </div>
-        
         <div class="photo-frame" onclick="nextPhoto()">
             <img src="photo1.jpg" id="slideshow-img" class="couple-photo">
         </div>
@@ -176,46 +168,128 @@
     </div>
 
     <script>
+        // --- Game Logic ---
+        const puzzleBoard = document.getElementById('puzzle-board');
+        let pieces = [];
+        let selectedPiece = null;
+        const rows = 3; const cols = 3; 
+
+        function initPuzzle() {
+            // สร้างชิ้นส่วน 9 ชิ้น
+            for (let i = 0; i < rows * cols; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'puzzle-piece';
+                
+                // คำนวณตำแหน่ง background
+                const row = Math.floor(i / cols);
+                const col = i % cols;
+                piece.style.backgroundPosition = `-${col * (280/3)}px -${row * (350/3)}px`;
+                piece.dataset.index = i; // เก็บตำแหน่งที่ถูกต้อง
+                
+                piece.onclick = () => onPieceClick(piece);
+                pieces.push(piece);
+            }
+            
+            // สุ่มตำแหน่ง
+            shuffle(pieces);
+            pieces.forEach(p => puzzleBoard.appendChild(p));
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function onPieceClick(clickedPiece) {
+            if (selectedPiece === clickedPiece) {
+                // ยกเลิกการเลือก
+                clickedPiece.classList.remove('selected');
+                selectedPiece = null;
+                return;
+            }
+
+            if (selectedPiece) {
+                // สลับตำแหน่ง DOM
+                const parent = clickedPiece.parentNode;
+                const nextSibling1 = selectedPiece.nextSibling === clickedPiece ? selectedPiece : selectedPiece.nextSibling;
+                
+                // เทคนิคการสลับ Node ใน DOM
+                puzzleBoard.insertBefore(selectedPiece, clickedPiece);
+                puzzleBoard.insertBefore(clickedPiece, nextSibling1);
+
+                selectedPiece.classList.remove('selected');
+                selectedPiece = null;
+
+                checkWin();
+            } else {
+                // เลือกชิ้นแรก
+                clickedPiece.classList.add('selected');
+                selectedPiece = clickedPiece;
+            }
+        }
+
+        function checkWin() {
+            const currentPieces = document.querySelectorAll('.puzzle-piece');
+            let isWin = true;
+            currentPieces.forEach((piece, index) => {
+                if (parseInt(piece.dataset.index) !== index) isWin = false;
+            });
+
+            if (isWin) {
+                setTimeout(() => {
+                    // ชนะแล้ว!
+                    document.getElementById('puzzle-wrapper').style.opacity = 0;
+                    setTimeout(() => document.getElementById('puzzle-wrapper').style.display = 'none', 1000);
+                    
+                    // แสดงคำชม
+                    const successOverlay = document.getElementById('success-msg-overlay');
+                    successOverlay.classList.add('show');
+
+                    // รอ 2 วิ แล้วแสดงข้อความยาว
+                    setTimeout(() => {
+                        successOverlay.style.opacity = 0;
+                        setTimeout(() => {
+                            successOverlay.style.display = 'none';
+                            document.getElementById('content-box').classList.add('visible');
+                        }, 500);
+                    }, 2000);
+
+                }, 500);
+            }
+        }
+
         // --- Photo System ---
-        const photoList = [ 'photo1.jpg', 'photo2.jpg', 'photo3.jpg' ];
+        const photoList = ['photo1.jpg', 'photo2.jpg', 'photo3.jpg'];
         let currentPhotoIndex = 0;
         const imgElement = document.getElementById('slideshow-img');
         let isChanging = false;
-
         function nextPhoto() {
-            if (isChanging) return;
-            isChanging = true;
+            if (isChanging) return; isChanging = true;
             imgElement.classList.add('photo-fade-out');
             setTimeout(() => {
                 currentPhotoIndex = (currentPhotoIndex + 1) % photoList.length;
                 imgElement.src = photoList[currentPhotoIndex];
-                imgElement.onload = () => {
-                    imgElement.classList.remove('photo-fade-out');
-                    isChanging = false;
-                };
+                imgElement.onload = () => { imgElement.classList.remove('photo-fade-out'); isChanging = false; };
             }, 600);
         }
 
-        // --- Fireworks System (Thick Lines Version) ---
+        // --- Fireworks System ---
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         let cw, ch;
-        const pixelRatio = window.devicePixelRatio || 1;
-        
         function resizeCanvas() {
+            const dpr = window.devicePixelRatio || 1;
             cw = window.innerWidth; ch = window.innerHeight;
-            canvas.width = cw * pixelRatio; canvas.height = ch * pixelRatio;
-            ctx.scale(pixelRatio, pixelRatio);
+            canvas.width = cw * dpr; canvas.height = ch * dpr;
+            canvas.style.width = cw + 'px'; canvas.style.height = ch + 'px';
+            ctx.scale(dpr, dpr);
         }
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
 
-        let fireworks = [];
-        let particles = [];
-        let mode = 0;
-        let timer = 0;
-
-        const classicColors = [ 0, 30, 50, 120, 190, 210, 280, 320 ];
+        let fireworks = []; let particles = []; let mode = 0; let timer = 0;
+        const classicColors = [0, 30, 50, 120, 190, 210, 280, 320];
 
         class Firework {
             constructor(sx, sy, tx, ty, special) {
@@ -223,10 +297,9 @@
                 this.tx = tx; this.ty = ty;
                 this.dist = Math.hypot(tx - sx, ty - sy);
                 this.travel = 0;
-                this.coords = [[sx, sy], [sx, sy]]; // ลดจำนวนหางลงนิดนึงสำหรับเส้นหนา
+                this.coords = [[sx, sy], [sx, sy]];
                 this.angle = Math.atan2(ty - sy, tx - sx);
-                this.speed = special ? 3 : 2; 
-                this.acc = 1.03;
+                this.speed = special ? 3 : 2; this.acc = 1.03;
                 this.hue = special ? Math.random() * 360 : classicColors[Math.floor(Math.random() * classicColors.length)];
                 this.special = special;
             }
@@ -236,7 +309,6 @@
                 const vx = Math.cos(this.angle) * this.speed;
                 const vy = Math.sin(this.angle) * this.speed;
                 this.travel = Math.hypot(this.sx - (this.x+vx), this.sy - (this.y+vy));
-                
                 if (this.travel >= this.dist) {
                     createParticles(this.tx, this.ty, this.special, this.hue);
                     fireworks.splice(i, 1);
@@ -248,30 +320,21 @@
                 ctx.moveTo(this.coords[this.coords.length-1][0], this.coords[this.coords.length-1][1]);
                 ctx.lineTo(this.x, this.y);
                 ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
-                // จรวดเส้นหนา และปลายมน
-                ctx.lineWidth = 5; 
-                ctx.lineCap = 'round';
-                ctx.stroke();
+                ctx.lineWidth = 4; ctx.lineCap = 'round'; ctx.stroke();
             }
         }
 
         class Particle {
             constructor(x, y, special, hue) {
-                this.x = x; this.y = y;
-                this.coords = [];
-                let cCount = special ? 8 : 6;
-                while(cCount--) this.coords.push([x, y]);
+                this.x = x; this.y = y; this.coords = [];
+                let cCount = special ? 8 : 5; while(cCount--) this.coords.push([x, y]);
                 this.angle = Math.random() * Math.PI * 2;
-                this.speed = Math.random() * (special ? 20 : 14) + 2; 
-                this.friction = 0.95; 
-                this.gravity = 0.7; 
+                this.speed = Math.random() * (special ? 18 : 12) + 2; 
+                this.friction = 0.95; this.gravity = 0.6; 
                 this.hue = hue + (Math.random() * 20 - 10); 
-                this.bright = Math.random() * 20 + 60; // ลดความสว่างลงนิดนึงให้เห็นเนื้อสีชัดๆ
-                this.alpha = 1;
-                this.decay = Math.random() * 0.008 + 0.005; 
-                
-                // สุ่มความหนาของเส้น (Brush Stroke Effect)
-                this.thickness = Math.random() * 4 + 3; // หนาระหว่าง 3px ถึง 7px
+                this.bright = Math.random() * 20 + 60;
+                this.alpha = 1; this.decay = Math.random() * 0.008 + 0.005; 
+                this.thickness = Math.random() * 3 + 2; 
             }
             update(i) {
                 this.coords.pop(); this.coords.unshift([this.x, this.y]);
@@ -286,70 +349,52 @@
                 ctx.moveTo(this.coords[this.coords.length-1][0], this.coords[this.coords.length-1][1]);
                 ctx.lineTo(this.x, this.y);
                 ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.bright}%, ${this.alpha})`;
-                // ใช้ความหนาที่สุ่มไว้ และปลายมน
-                ctx.lineWidth = this.thickness;
-                ctx.lineCap = 'round';
-                ctx.stroke();
-                
-                // เอาจุด Glitter ที่หัวออก เพื่อเน้นเส้นหนาๆ
-                // ctx.beginPath(); ctx.arc(...); ctx.fill();
+                ctx.lineWidth = this.thickness; ctx.lineCap = 'round'; ctx.stroke();
             }
         }
 
         function createParticles(x, y, special, hue) {
-            let count = special ? 250 : 100; // ลดจำนวนลงนิดนึงเพราะเส้นหนาขึ้น เดี๋ยวจะรก
+            let count = special ? 200 : 80;
             while(count--) particles.push(new Particle(x, y, special, hue));
         }
 
         function loop() {
             requestAnimationFrame(loop);
-            // เพิ่มความเข้มของหาง เพื่อให้เห็นเส้นชัดขึ้น
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
-            ctx.fillRect(0, 0, cw, ch);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; ctx.fillRect(0, 0, cw, ch);
             ctx.globalCompositeOperation = 'lighter';
-
             let i = fireworks.length; while(i--) { fireworks[i].draw(); fireworks[i].update(i); }
             let j = particles.length; while(j--) { particles[j].draw(); particles[j].update(j); }
-
             timer++;
             if(mode === 1) { 
-                if(timer % 30 === 0) // ยิงช้าลงอีกนิด
-                    fireworks.push(new Firework(cw/2 + (Math.random()-0.5)*cw*0.8, ch, Math.random()*cw, Math.random()*ch/2));
+                if(timer % 35 === 0) 
+                    fireworks.push(new Firework(cw/2 + (Math.random()-0.5)*cw*0.5, ch, Math.random()*cw, ch*0.3 + Math.random()*ch*0.2));
             } else if(mode === 3) { 
                 if(timer % 50 === 0) 
-                    fireworks.push(new Firework(Math.random()*cw, ch, Math.random()*cw, Math.random()*ch/2.5));
+                    fireworks.push(new Firework(Math.random()*cw, ch, Math.random()*cw, ch*0.3 + Math.random()*ch*0.2));
             }
         }
 
         function startShow() {
             const ss = document.getElementById('start-screen');
-            ss.style.opacity = 0;
-            setTimeout(()=> ss.style.display = 'none', 1000);
+            ss.style.opacity = 0; setTimeout(()=> ss.style.display = 'none', 1000);
             document.getElementById('bg-music').play().catch(()=>{});
-            
-            mode = 1; 
-            loop();
-            
-            setTimeout(() => {
-                mode = 2; 
-                setTimeout(() => {
-                    fireworks.push(new Firework(cw/2, ch, cw/2, ch*0.25, true));
-                }, 1500);
-            }, 7000);
+            mode = 1; loop();
+            // ยิงพลุลูกใหญ่จบแล้วเข้าสู่เกม
+            setTimeout(() => { mode = 2; setTimeout(() => { fireworks.push(new Firework(cw/2, ch, cw/2, ch*0.3, true)); }, 1500); }, 7000);
         }
 
         function triggerFinale() {
             const flash = document.getElementById('flash-overlay');
             flash.style.opacity = 0.6; setTimeout(()=> flash.style.opacity = 0, 800);
+            
+            // 1. โชว์ชื่อ
+            setTimeout(() => { document.getElementById('name-container').classList.add('visible'); mode = 3; }, 300);
 
+            // 2. รอแป๊บนึง แล้วเริ่มเกม Jigsaw!
             setTimeout(() => {
-                document.getElementById('name-container').classList.add('visible');
-                mode = 3;
-            }, 300);
-
-            setTimeout(() => {
-                document.getElementById('content-box').classList.add('visible');
+                initPuzzle();
+                document.getElementById('puzzle-wrapper').classList.add('active');
             }, 2500);
         }
     </script>
