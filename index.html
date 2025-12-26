@@ -2,22 +2,24 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Happy New Year Manao & Ome</title>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0; padding: 0;
-            background: #020202; /* ดำสนิท */
+            background: #020202;
             overflow: hidden;
             font-family: 'Sarabun', sans-serif;
             user-select: none;
+            /* ป้องกันการเลื่อนหน้าจอในมือถือ */
+            position: fixed; width: 100%; height: 100%;
         }
 
         canvas {
             display: block; position: absolute; top: 0; left: 0; z-index: 1;
-            /* เพิ่มความคมชัดให้ประกายไฟ */
-            filter: contrast(1.2) saturate(1.3); 
+            /* เพิ่มความคมชัดและสดใสให้เข้ากับเส้นที่หนาขึ้น */
+            filter: contrast(1.3) saturate(1.4); 
         }
 
         #start-screen {
@@ -30,21 +32,27 @@
         #start-screen h1 { 
             animation: pulse 1.5s infinite alternate; 
             text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            text-align: center; font-size: 1.8rem;
         }
 
+        /* --- ปรับตำแหน่งและขนาดสำหรับมือถือแนวตั้ง --- */
         #name-container {
-            position: absolute; top: 18%; left: 50%;
+            position: absolute; 
+            top: 12%; /* ขยับขึ้นไปสูงๆ */
+            left: 50%;
             transform: translate(-50%, -50%) scale(0.8);
             z-index: 10; opacity: 0; pointer-events: none;
             transition: all 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-            width: 100%; text-align: center;
+            width: 90%; /* ให้กว้างเกือบเต็มจอ */
+            text-align: center;
         }
         #name-container.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 
         .glowing-text {
             font-family: 'Dancing Script', cursive;
-            font-size: 3.5rem; color: #fff;
-            /* เปลี่ยนเงาชื่อเป็นสีขาว/ชมพูอ่อนๆ ให้เข้ากับกรอบรูปขาว */
+            /* ขนาดฟอนต์เริ่มต้นสำหรับจอใหญ่ */
+            font-size: 3.5rem; 
+            color: #fff;
             text-shadow: 0 0 10px #fff, 0 0 20px #ffb7b2, 0 0 40px #ffb7b2;
             white-space: nowrap; margin: 0;
         }
@@ -52,54 +60,49 @@
         #flash-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: white; z-index: 50; opacity: 0; pointer-events: none;
-            transition: opacity 0.5s ease-out; /* Flash ช้าลงนิดนึงให้ดูนุ่ม */
+            transition: opacity 0.5s ease-out;
         }
 
         #content-box {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 80%;
+            position: absolute; bottom: 0; left: 0; width: 100%; 
+            height: 85%; /* เพิ่มพื้นที่ให้สูงขึ้น */
             z-index: 20; display: flex; flex-direction: column;
             align-items: center; justify-content: flex-end;
-            padding-bottom: 30px; opacity: 0;
+            padding-bottom: 20px; opacity: 0;
             transform: translateY(30px); transition: all 2s ease-out;
-            /* ไล่สีพื้นหลังจางๆ ให้ข้อความอ่านง่ายขึ้น */
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent 100%);
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 20%, transparent 100%);
         }
         #content-box.visible { opacity: 1; transform: translateY(0); }
 
         .title-msg {
             font-size: 1.6rem; color: #fff; font-weight: 600;
-            margin-bottom: 15px; text-align: center;
+            margin-bottom: 10px; text-align: center;
             text-shadow: 0 0 15px rgba(255,255,255, 0.6);
+            width: 90%;
         }
 
         .body-msg {
-            font-size: 0.95rem; color: #f0f0f0; font-weight: 300;
-            text-align: center; line-height: 1.7;
-            margin-bottom: 25px; padding: 0 25px;
-            max-width: 600px;
+            font-size: 1rem; color: #f0f0f0; font-weight: 300;
+            text-align: center; line-height: 1.5;
+            margin-bottom: 20px; padding: 0 15px;
+            width: 90%; word-wrap: break-word;
         }
 
-        /* --- กรอบรูปสีขาว --- */
         .photo-frame {
             position: relative; padding: 6px;
-            /* เปลี่ยนเป็นสีขาวล้วน และมีเงาฟุ้งๆ */
             background: #ffffff;
             border-radius: 12px;
             box-shadow: 0 0 25px rgba(255, 255, 255, 0.5); 
+            /* ขนาดเริ่มต้นสำหรับจอใหญ่ */
             width: 200px; height: 260px;
             cursor: pointer; transition: transform 0.3s, box-shadow 0.3s;
             flex-shrink: 0;
-        }
-        .photo-frame:hover { 
-            transform: scale(1.02); 
-            box-shadow: 0 0 40px rgba(255, 255, 255, 0.8);
         }
         .photo-frame:active { transform: scale(0.95); }
 
         .couple-photo {
             width: 100%; height: 100%;
             object-fit: cover; border-radius: 8px; 
-            /* ขอบรูปบางๆ ด้านใน */
             border: 1px solid #ddd;
             transition: opacity 0.6s ease-in-out;
         }
@@ -107,7 +110,7 @@
         .photo-fade-out { opacity: 0; }
         
         .click-hint {
-            font-size: 0.75rem; color: rgba(255,255,255,0.5);
+            font-size: 0.8rem; color: rgba(255,255,255,0.5);
             margin-top: 10px; font-weight: 300; letter-spacing: 1px;
             animation: blink 3s infinite ease-in-out;
         }
@@ -115,12 +118,22 @@
         @keyframes pulse { from { transform: scale(1); opacity: 0.8; } to { transform: scale(1.05); opacity: 1; } }
         @keyframes blink { 0%,100% { opacity: 0.3; } 50% { opacity: 0.8; } }
 
+        /* --- Media Query สำหรับมือถือแนวตั้ง (สำคัญมาก) --- */
         @media (max-width: 600px) {
-            .glowing-text { font-size: 2.5rem; }
-            .title-msg { font-size: 1.4rem; }
-            .body-msg { font-size: 0.85rem; padding: 0 15px; margin-bottom: 15px;}
-            .photo-frame { width: 180px; height: 240px; }
-            #name-container { top: 15%; }
+            /* ปรับขนาดฟอนต์ชื่อให้เล็กลง พอดีจอ */
+            .glowing-text { font-size: 2.5rem; } 
+            /* ขยับชื่อขึ้นไปอีก */
+            #name-container { top: 10%; }
+            
+            /* ปรับขนาดข้อความต่างๆ ให้เล็กลง */
+            .title-msg { font-size: 1.3rem; }
+            .body-msg { font-size: 0.85rem; line-height: 1.6; margin-bottom: 15px; }
+            
+            /* ปรับขนาดกรอบรูปให้เล็กลงและเป็นแนวตั้ง */
+            .photo-frame { width: 160px; height: 220px; }
+            
+            /* ปรับหน้าจอเริ่ม */
+            #start-screen h1 { font-size: 1.5rem; }
         }
     </style>
 </head>
@@ -130,7 +143,7 @@
 
     <div id="start-screen" onclick="startShow()">
         <h1>✨ แตะเพื่อเริ่ม ✨</h1>
-        <p>(เปิดเสียงด้วยนะ)</p>
+        <p style="font-size: 0.9rem;">(เปิดเสียงด้วยนะ)</p>
     </div>
 
     <div id="flash-overlay"></div>
@@ -153,7 +166,7 @@
             ขอให้เธอมีแต่ความสุข สุขภาพแข็งแรง<br>
             และไม่ว่าจะเจออะไร พี่จะอยู่ข้างๆ เธอเสมอ<br>
             <br>
-            <span style="font-size: 1.1rem; font-weight: 500; color: #ffb7b2;">รักนะ ❤️🥰</span>
+            <span style="font-size: 1rem; font-weight: 500; color: #ffb7b2;">รักนะ ❤️🥰</span>
         </div>
         
         <div class="photo-frame" onclick="nextPhoto()">
@@ -164,12 +177,7 @@
 
     <script>
         // --- Photo System ---
-        const photoList = [
-            'photo1.jpg',
-            'photo2.jpg',
-            'photo3.jpg'
-        ];
-        
+        const photoList = [ 'photo1.jpg', 'photo2.jpg', 'photo3.jpg' ];
         let currentPhotoIndex = 0;
         const imgElement = document.getElementById('slideshow-img');
         let isChanging = false;
@@ -185,13 +193,13 @@
                     imgElement.classList.remove('photo-fade-out');
                     isChanging = false;
                 };
-            }, 600); // Fade นานขึ้นนิดนึง
+            }, 600);
         }
 
-        // --- Fireworks System (New Physics) ---
+        // --- Fireworks System (Thick Lines Version) ---
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
-        let cw = window.innerWidth, ch = window.innerHeight;
+        let cw, ch;
         const pixelRatio = window.devicePixelRatio || 1;
         
         function resizeCanvas() {
@@ -207,17 +215,7 @@
         let mode = 0;
         let timer = 0;
 
-        // สีพลุแบบ Classic (โทนสีสดๆ ไม่มั่ว)
-        const classicColors = [
-            0,    // Red
-            30,   // Orange
-            50,   // Gold
-            120,  // Green
-            190,  // Cyan
-            210,  // Blue
-            280,  // Purple
-            320   // Pink
-        ];
+        const classicColors = [ 0, 30, 50, 120, 190, 210, 280, 320 ];
 
         class Firework {
             constructor(sx, sy, tx, ty, special) {
@@ -225,12 +223,10 @@
                 this.tx = tx; this.ty = ty;
                 this.dist = Math.hypot(tx - sx, ty - sy);
                 this.travel = 0;
-                this.coords = [[sx, sy], [sx, sy], [sx, sy]];
+                this.coords = [[sx, sy], [sx, sy]]; // ลดจำนวนหางลงนิดนึงสำหรับเส้นหนา
                 this.angle = Math.atan2(ty - sy, tx - sx);
-                // ลดความเร็วลูกยิงขึ้นฟ้า ให้ดูสมูท
                 this.speed = special ? 3 : 2; 
                 this.acc = 1.03;
-                // สุ่มสีจากรายการที่เตรียมไว้ (1 ลูก 1 สี)
                 this.hue = special ? Math.random() * 360 : classicColors[Math.floor(Math.random() * classicColors.length)];
                 this.special = special;
             }
@@ -251,8 +247,10 @@
                 ctx.beginPath();
                 ctx.moveTo(this.coords[this.coords.length-1][0], this.coords[this.coords.length-1][1]);
                 ctx.lineTo(this.x, this.y);
-                ctx.strokeStyle = `hsl(${this.hue}, 100%, 70%)`;
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = `hsl(${this.hue}, 100%, 60%)`;
+                // จรวดเส้นหนา และปลายมน
+                ctx.lineWidth = 5; 
+                ctx.lineCap = 'round';
                 ctx.stroke();
             }
         }
@@ -264,27 +262,16 @@
                 let cCount = special ? 8 : 6;
                 while(cCount--) this.coords.push([x, y]);
                 this.angle = Math.random() * Math.PI * 2;
-                
-                // เพิ่มความเร็วต้น (ระเบิดวงกว้างขึ้น)
-                this.speed = Math.random() * (special ? 22 : 15) + 2; 
-                
-                // ลดแรงเสียดทาน (0.96) ทำให้ลูกไฟลอยไปได้ไกลขึ้น นานขึ้น
-                this.friction = 0.96; 
-                
-                // ลดแรงดึงดูด ทำให้ย้อยลงมาช้าๆ (Slow motion effect)
-                this.gravity = 0.8; 
-                
-                // ใช้สีเดียวกับลูกพลุ แต่สุ่มความสว่างนิดหน่อย
+                this.speed = Math.random() * (special ? 20 : 14) + 2; 
+                this.friction = 0.95; 
+                this.gravity = 0.7; 
                 this.hue = hue + (Math.random() * 20 - 10); 
-                this.bright = Math.random() * 30 + 70;
+                this.bright = Math.random() * 20 + 60; // ลดความสว่างลงนิดนึงให้เห็นเนื้อสีชัดๆ
                 this.alpha = 1;
+                this.decay = Math.random() * 0.008 + 0.005; 
                 
-                // ลดการจางหาย (อยู่ได้นานขึ้น เพื่อให้ชมความระยิบระยับ)
-                this.decay = Math.random() * 0.008 + 0.004; 
-                
-                // ตั้งค่าการกระพริบ
-                this.sparkleSpeed = Math.random() * 0.1 + 0.05;
-                this.sparklePhase = Math.random() * Math.PI * 2;
+                // สุ่มความหนาของเส้น (Brush Stroke Effect)
+                this.thickness = Math.random() * 4 + 3; // หนาระหว่าง 3px ถึง 7px
             }
             update(i) {
                 this.coords.pop(); this.coords.unshift([this.x, this.y]);
@@ -292,43 +279,33 @@
                 this.x += Math.cos(this.angle) * this.speed;
                 this.y += Math.sin(this.angle) * this.speed + this.gravity;
                 this.alpha -= this.decay;
-                
-                // อัปเดตการกระพริบ
-                this.sparklePhase += this.sparkleSpeed;
-
                 if(this.alpha <= this.decay) particles.splice(i, 1);
             }
             draw() {
-                // คำนวณความสว่างแบบ Sine Wave (วูบวาบๆ นุ่มๆ)
-                let sparkleVal = this.bright + Math.sin(this.sparklePhase) * 20;
-                
                 ctx.beginPath();
                 ctx.moveTo(this.coords[this.coords.length-1][0], this.coords[this.coords.length-1][1]);
                 ctx.lineTo(this.x, this.y);
-                // เส้นหาง
-                ctx.strokeStyle = `hsla(${this.hue}, 100%, ${sparkleVal}%, ${this.alpha})`;
-                ctx.lineWidth = 1;
+                ctx.strokeStyle = `hsla(${this.hue}, 100%, ${this.bright}%, ${this.alpha})`;
+                // ใช้ความหนาที่สุ่มไว้ และปลายมน
+                ctx.lineWidth = this.thickness;
+                ctx.lineCap = 'round';
                 ctx.stroke();
                 
-                // เม็ดแสงที่หัว (Glitter)
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, 1.2, 0, Math.PI*2); // เม็ดเล็กคมๆ
-                ctx.fillStyle = `hsla(${this.hue}, 100%, 90%, ${this.alpha * 1.5})`; // สีเกือบขาวให้ดูวิ้ง
-                ctx.fill();
+                // เอาจุด Glitter ที่หัวออก เพื่อเน้นเส้นหนาๆ
+                // ctx.beginPath(); ctx.arc(...); ctx.fill();
             }
         }
 
         function createParticles(x, y, special, hue) {
-            // เพิ่มจำนวนเม็ด
-            let count = special ? 350 : 120;
+            let count = special ? 250 : 100; // ลดจำนวนลงนิดนึงเพราะเส้นหนาขึ้น เดี๋ยวจะรก
             while(count--) particles.push(new Particle(x, y, special, hue));
         }
 
         function loop() {
             requestAnimationFrame(loop);
-            // หางยาวปานกลาง
+            // เพิ่มความเข้มของหาง เพื่อให้เห็นเส้นชัดขึ้น
             ctx.globalCompositeOperation = 'destination-out';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.3)'; 
             ctx.fillRect(0, 0, cw, ch);
             ctx.globalCompositeOperation = 'lighter';
 
@@ -337,12 +314,10 @@
 
             timer++;
             if(mode === 1) { 
-                // ช่วงแรก: ยิงทุกๆ 25 เฟรม (ช้าลงกว่าเดิม)
-                if(timer % 25 === 0) 
-                    fireworks.push(new Firework(cw/2 + (Math.random()-0.5)*400, ch, Math.random()*cw, Math.random()*ch/2));
+                if(timer % 30 === 0) // ยิงช้าลงอีกนิด
+                    fireworks.push(new Firework(cw/2 + (Math.random()-0.5)*cw*0.8, ch, Math.random()*cw, Math.random()*ch/2));
             } else if(mode === 3) { 
-                // ช่วงโชว์ข้อความ: ยิงทุกๆ 40 เฟรม (ช้าๆ ให้ได้พักดูพลุ)
-                if(timer % 40 === 0) 
+                if(timer % 50 === 0) 
                     fireworks.push(new Firework(Math.random()*cw, ch, Math.random()*cw, Math.random()*ch/2.5));
             }
         }
@@ -359,10 +334,9 @@
             setTimeout(() => {
                 mode = 2; 
                 setTimeout(() => {
-                    // ลูกไฮไลท์ตรงกลาง
-                    fireworks.push(new Firework(cw/2, ch, cw/2, ch*0.3, true));
+                    fireworks.push(new Firework(cw/2, ch, cw/2, ch*0.25, true));
                 }, 1500);
-            }, 7000); // ยืดเวลาช่วงแรกให้นานขึ้นนิดนึง
+            }, 7000);
         }
 
         function triggerFinale() {
@@ -376,7 +350,7 @@
 
             setTimeout(() => {
                 document.getElementById('content-box').classList.add('visible');
-            }, 2500); // รอชื่อขึ้นแป๊บนึง ค่อยขึ้นข้อความ
+            }, 2500);
         }
     </script>
 </body>
