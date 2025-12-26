@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy New Year Manao & Ome</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Sarabun:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0; padding: 0;
+            background: #000;
+            overflow: hidden;
+            font-family: 'Sarabun', sans-serif;
+            user-select: none;
+        }
+
+        canvas {
+            display: block; position: absolute; top: 0; left: 0; z-index: 1;
+            filter: blur(0.5px) saturate(1.5); 
+        }
+
+        /* หน้าจอกดเริ่ม */
+        #start-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #1a001a 0%, #000000 100%);
+            z-index: 999;
+            display: flex; justify-content: center; align-items: center; flex-direction: column;
+            color: white; cursor: pointer; transition: opacity 0.8s;
+        }
+        #start-screen h1 { animation: pulse 1s infinite alternate; }
+
+        /* ชื่อ Manao 💗 Ome */
+        #name-container {
+            position: absolute; top: 20%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+            z-index: 10; opacity: 0; pointer-events: none;
+            transition: all 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 100%; text-align: center;
+        }
+        #name-container.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+
+        .glowing-text {
+            font-family: 'Dancing Script', cursive; /* ใช้ฟอนต์ลายมือสำหรับชื่อภาษาอังกฤษ */
+            font-size: 4rem; color: #fff;
+            text-shadow: 0 0 10px #fff, 0 0 20px #ff00de, 0 0 40px #00dbde;
+            white-space: nowrap; /* ห้ามตัดบรรทัด */
+        }
+
+        /* เอฟเฟกต์จอขาวตอนระเบิด */
+        #flash-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 50; opacity: 0; pointer-events: none;
+            transition: opacity 0.1s;
+        }
+
+        /* กล่องข้อความและรูปภาพ */
+        #content-box {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 75%; /* เพิ่มพื้นที่ให้ข้อความยาวๆ */
+            z-index: 20; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-end;
+            padding-bottom: 20px; opacity: 0;
+            transform: translateY(50px); transition: all 1.5s ease-out;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%); /* พื้นหลังจางๆ ให้อ่านง่าย */
+        }
+        #content-box.visible { opacity: 1; transform: translateY(0); }
+
+        /* หัวข้อสวัสดีปีใหม่ */
+        .title-msg {
+            font-size: 1.8rem; color: #fff; font-weight: 600;
+            margin-bottom: 10px; text-align: center;
+            text-shadow: 0 0 10px rgba(255,105,180, 0.9);
+        }
+
+        /* เนื้อหาจดหมาย */
+        .body-msg {
+            font-size: 1rem; color: #e0e0e0; font-weight: 300;
+            text-align: center; line-height: 1.6;
+            margin-bottom: 20px; padding: 0 20px;
+            max-width: 600px;
+        }
+
+        /* กรอบรูป */
+        .photo-frame {
+            position: relative; padding: 4px;
+            background: linear-gradient(45deg, #ff00de, #00dbde, #ffcc00);
+            background-size: 200% 200%;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(255, 0, 222, 0.4);
+            animation: gradientMove 3s ease infinite;
+            width: 220px; height: 280px; /* ลดขนาดรูปลงนิดหน่อยเพื่อให้ข้อความไม่เบียด */
+            cursor: pointer; transition: transform 0.2s;
+            flex-shrink: 0; /* ห้ามรูปหด */
+        }
+        .photo-frame:active { transform: scale(0.95); }
+
+        .couple-photo {
+            width: 100%; height: 100%;
+            object-fit: cover; border-radius: 16px; border: 3px solid white;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .photo-fade-out { opacity: 0; }
+        
+        .click-hint {
+            font-size: 0.8rem; color: rgba(255,255,255,0.6);
+            margin-top: 8px; animation: blink 2s infinite;
+        }
+
+        @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.1); } }
+        @keyframes blink { 0%,100% { opacity: 0.4; } 50% { opacity: 1; } }
+        @keyframes gradientMove { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+
+        @media (max-width: 600px) {
+            .glowing-text { font-size: 2.8rem; }
+            .title-msg { font-size: 1.5rem; }
+            .body-msg { font-size: 0.9rem; }
+            .photo-frame { width: 180px; height: 240px; }
+            #name-container { top: 15%; }
+        }
+    </style>
+</head>
+<body>
+
+    <audio id="bg-music" loop><source src="song.mp3" type="audio/mpeg"></audio>
+
+    <div id="start-screen" onclick="startShow()">
+        <h1>✨ แตะเพื่อเริ่มเซอร์ไพรส์ ✨</h1>
+        <p>(เปิดเสียงด้วยนะ)</p>
+    </div>
+
+    <div id="flash-overlay"></div>
+    <canvas id="canvas"></canvas>
+
+    <div id="name-container">
+        <h1 class="glowing-text">Manao 💗 Ome</h1>
+    </div>
+
+    <div id="content-box">
+        <div class="title-msg">สวัสดีปีใหม่นะที่รัก 🤍✨</div>
+        
+        <div class="body-msg">
+            ขอบคุณปีที่ผ่านมาที่มีเธออยู่ข้างๆ กันเสมอ<br>
+            ไม่ว่าจะเป็นวันที่ดีหรือวันที่เหนื่อย<br>
+            แค่หันมาเห็นเธอ พี่ก็รู้สึกว่าไม่ต้องสู้คนเดียวเลย<br>
+            ขอให้ปีใหม่นี้เป็นอีกปีที่เราได้จับมือกันแน่นๆ<br>
+            มีรอยยิ้มให้กันเยอะๆ ทะเลาะกันน้อยๆ<br>
+            และรักกันมากขึ้นทุกๆ วันนะ<br>
+            ขอให้เธอมีแต่ความสุข สุขภาพแข็งแรง<br>
+            และไม่ว่าจะเจออะไร พี่จะอยู่ข้างๆ เธอเสมอ<br>
+            <span style="font-size: 1.2rem; font-weight: 600; color: #ff69b4;">รักนะ ❤️🥰</span>
+        </div>
+        
+        <div class="photo-frame" onclick="nextPhoto()">
+            <img src="photo1.jpg" id="slideshow-img" class="couple-photo">
+        </div>
+        <div class="click-hint">(แตะที่รูปเพื่อดูรูปถัดไป)</div>
+    </div>
+
+    <script>
+        // --- ส่วนจัดการรูปภาพ (เหมือนเดิม) ---
+        const photoList = [
+            'photo1.jpg',
+            'photo2.jpg',
+            'photo3.jpg'
+            // เพิ่มรูปได้ตรงนี้ เช่น 'photo4.jpg',
+        ];
+        
+        let currentPhotoIndex = 0;
+        const imgElement = document.getElementById('slideshow-img');
+        let isChanging = false;
+
+        function nextPhoto() {
+            if (isChanging) return;
+            isChanging = true;
+            imgElement.classList.add('photo-fade-out');
+            setTimeout(() => {
+                currentPhotoIndex = (currentPhotoIndex + 1) % photoList.length;
+                imgElement.src = photoList[currentPhotoIndex];
+                imgElement.onload = () => {
+                    imgElement.classList.remove('photo-fade-out');
+                    isChanging = false;
+                };
+            }, 500); 
+        }
+
+        // --- ส่วนระบบพลุ (เหมือนเดิม) ---
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+        let cw = window.innerWidth, ch = window.innerHeight;
+        const pixelRatio = window.devicePixelRatio || 1;
+        
+        function resizeCanvas() {
+            cw = window.innerWidth; ch = window.innerHeight;
+            canvas.width = cw * pixelRatio; canvas.height = ch * pixelRatio;
+            ctx.scale(pixelRatio, pixelRatio);
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        let fireworks = [];
+        let particles = [];
+        let mode = 0;
+        let timer = 0;
+
+        class Firework {
+            constructor(sx, sy, tx, ty, special) {
+                this.x = sx; this.y = sy; this.sx = sx; this.sy = sy;
+                this.tx = tx; this.ty = ty;
+                this.dist = Math.hypot(tx - sx, ty - sy);
+                this.travel = 0;
+                this.coords = [[sx, sy], [sx, sy], [sx, sy]];
+                this.angle = Math.atan2(ty - sy, tx - sx);
+                this.speed = special ? 3.5 : 2.5;
+                this.acc = 1.05;
+                this.bright = Math.random() * 20 + 80;
+                this.hue = Math.random() * 360; 
+                this.special = special;
+            }
+            update(i) {
+                this.coords.pop(); this.coords.unshift([this.x, this.y]);
+                this.speed *= this.acc;
+                const vx = Math.cos(this.angle) * this.speed;
+                const vy = Math.sin(this.angle) * this.speed;
+                this.travel = Math.hypot(this.sx - (this.x+vx), this.sy - (this.y+vy));
+                if (this.travel >= this.dist) {
+                    createParticles(this.tx, this.ty, this.special);
+                    fireworks.splice(i, 1);
+                    if(this.special) triggerFinale();
+                } else { this.x += vx; this.y += vy; }
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.moveTo(this.coords[this.coords.length-1][0], this.coords[this.coords.length-1][1]);
+                ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = `hsl(${this.hue}, 100%, ${this.bright}%)`;
+                ctx.lineWidth = this.special ? 4 : 2;
+                ctx.stroke();
+            }
+        }
+
+        class Particle {
+            constructor(x, y, special) {
+                this.x = x; this.y = y;
+                this.coords = [];
+                let cCount = special ? 10 : 5;
+                while(cCount--) this.coords.push([x, y]);
+                this.angle = Math.random() * Math.PI * 2;
+                this.speed = Math.random() * (special ? 20 : 12) + 2;
+                this.friction = 0.93; 
+                this.gravity = 1.5;
+                this.hue = Math.random() * 360; 
+                this.bright = Math.random() * 50 + 50;
+                this.alpha = 1;
+                this.decay = Math.random() * 0.01 + 0.005;
+            }
+            update(i) {
+                this.coords.pop(); this.coords.unshift([this.x, this.y]);
+                this.speed *= this.friction;
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed + this.gravity;
+                this.alpha -= this.decay;
+                if(this.alpha <= this.decay) particles.splice(i, 1);
+            }
+            draw() {
+                let sparkleVal = Math.random() > 0.8 ? 100 : this.bright; 
+                ctx.beginPath();
+                ctx.moveTo(this.coords[this.coords.length-1][0], this.coords[this.coords.length-1][1]);
+                ctx.lineTo(this.x, this.y);
+                ctx.strokeStyle = `hsla(${this.hue}, 100%, ${sparkleVal}%, ${this.alpha})`;
+                ctx.lineWidth = Math.random() * 2;
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, Math.random()*2, 0, Math.PI*2);
+                ctx.fillStyle = `hsla(${this.hue}, 100%, 80%, ${this.alpha})`;
+                ctx.fill();
+            }
+        }
+
+        function createParticles(x, y, special) {
+            let count = special ? 300 : 80;
+            while(count--) particles.push(new Particle(x, y, special));
+        }
+
+        function loop() {
+            requestAnimationFrame(loop);
+            ctx.globalCompositeOperation = 'destination-out';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; 
+            ctx.fillRect(0, 0, cw, ch);
+            ctx.globalCompositeOperation = 'lighter';
+
+            let i = fireworks.length; while(i--) { fireworks[i].draw(); fireworks[i].update(i); }
+            let j = particles.length; while(j--) { particles[j].draw(); particles[j].update(j); }
+
+            timer++;
+            if(mode === 1) { 
+                if(timer % 5 === 0) 
+                    fireworks.push(new Firework(cw/2 + (Math.random()-0.5)*300, ch, Math.random()*cw, Math.random()*ch/2));
+            } else if(mode === 3) { 
+                if(timer % 20 === 0) 
+                    fireworks.push(new Firework(Math.random()*cw, ch, Math.random()*cw, Math.random()*ch/3));
+            }
+        }
+
+        function startShow() {
+            document.getElementById('start-screen').style.opacity = 0;
+            setTimeout(()=> document.getElementById('start-screen').style.display = 'none', 800);
+            document.getElementById('bg-music').play().catch(()=>{});
+            
+            mode = 1; 
+            loop();
+            
+            setTimeout(() => {
+                mode = 2; 
+                setTimeout(() => {
+                    fireworks.push(new Firework(cw/2, ch, cw/2, ch*0.35, true));
+                }, 1000);
+            }, 6000);
+        }
+
+        function triggerFinale() {
+            const flash = document.getElementById('flash-overlay');
+            flash.style.opacity = 0.8; setTimeout(()=> flash.style.opacity = 0, 200);
+
+            setTimeout(() => {
+                document.getElementById('name-container').classList.add('visible');
+                mode = 3;
+            }, 100);
+
+            setTimeout(() => {
+                document.getElementById('content-box').classList.add('visible');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
